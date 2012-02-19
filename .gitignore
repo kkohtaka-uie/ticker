@@ -2,3 +2,4 @@ ticker
 bin
 include
 lib
+*.o

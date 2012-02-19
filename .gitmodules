@@ -1,3 +1,0 @@
-[submodule "submodules/libevent"]
-	path = submodules/libevent
-	url = https://github.com/libevent/libevent.git
