@@ -1,19 +1,20 @@
+#include "Ticker.h"
+#include "Timestamp.h"
 #include <event2/event.h>
-#include <event2/buffer.h>
-#include <event2/bufferevent.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-
 #include <iostream>
-#include <cstdio>
 #include <cstring>
+#include <arpa/inet.h>
 
-const std::string responseString (void) {
+Ticker::Ticker (
+    void
+) {}
 
-  return std::string("ok?");
-}
+Ticker::~Ticker (
+    void
+) {}
 
-void listen_callback(
+static void
+listen_callback (
     evutil_socket_t listen_fd,
     short what,
     void *arg) {
@@ -31,26 +32,38 @@ void listen_callback(
   }
   else {
 
-    std::string response(responseString());
+    std::string response(Timestamp::instance().timestamp());
 
     write(fd, response.c_str(), response.length());
     close(fd);
   }
 }
 
-void run (uint16_t port) {
+void
+Ticker::run (
+    unsigned short port,
+    int backlog
+) const {
 
-  struct sockaddr_in sin;
-  sin.sin_family = AF_INET;
-  sin.sin_addr.s_addr = 0;
-  sin.sin_port = htons(port);
+  // socket()
 
-  evutil_socket_t read_fd = socket(AF_INET, SOCK_STREAM, 0);
-  evutil_make_socket_nonblocking(read_fd);
+  evutil_socket_t sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  evutil_make_socket_nonblocking(sockfd);
+
+  // sockaddr_in
+
+  struct sockaddr_in servaddr;
+  bzero(&servaddr, sizeof(servaddr));
+  servaddr.sin_family = AF_INET;
+  servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  servaddr.sin_port = htons(port);
 
   // bind()
 
-  if (bind(read_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+  if (bind(
+        sockfd,
+        reinterpret_cast< struct sockaddr * >(&servaddr),
+        sizeof(servaddr)) < 0) {
 
     std::cerr << "bind() failed." << std::endl;
 
@@ -59,7 +72,7 @@ void run (uint16_t port) {
 
   // listen()
 
-  if (listen(read_fd, 16) < 0) {
+  if (listen(sockfd, backlog) < 0) {
 
     std::cerr << "linten() failed." << std::endl;
 
@@ -81,7 +94,7 @@ void run (uint16_t port) {
 
   struct event *read_event = event_new(
       base,
-      read_fd,
+      sockfd,
       EV_READ | EV_PERSIST,
       listen_callback,
       (void *)base);
@@ -91,15 +104,4 @@ void run (uint16_t port) {
   // event_base_dispatch()
 
   event_base_dispatch(base);
-}
-
-int main (
-  int argc,
-  char **argv) {
-
-  setvbuf(stdout, NULL, _IONBF, 0);
-
-  run(8888);
-
-  return 0;
 }

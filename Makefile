@@ -1,7 +1,7 @@
 CC = clang
-CFLAGS = -c -g -Wall -Werror
+CFLAGS = -c -g -Wall -Werror -std=c++0x
 LDFLAGS = -lstdc++ -levent
-SOURCES = main.cc
+SOURCES = main.cc Ticker.cc Timestamp.cc
 OBJECTS = $(SOURCES:.cc=.o)
 EXCUTABLE = ticker
 
@@ -14,6 +14,9 @@ $(EXCUTABLE): $(OBJECTS)
 
 .cc.o:
 	$(CC) $(CFLAGS) $< -o $@
+
+Ticker.o: Ticker.h Ticker.cc Timestamp.h
+Timestamp.o: Timestamp.h Timestamp.cc
 
 clean:
 	rm -rf *.o
