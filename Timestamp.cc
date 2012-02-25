@@ -1,13 +1,26 @@
 #include "Timestamp.h"
 
-static Timestamp timestamp_;
-
 const Timestamp &
 Timestamp::instance (
     void
 ) {
 
-  return timestamp_;
+  // Double-checked locking pattern.
+
+  static Timestamp *pInstance = nullptr;
+
+  if (nullptr == pInstance) {
+
+    static std::mutex mutex;
+    std::lock_guard< std::mutex > lock(mutex);
+
+    if (nullptr == pInstance) {
+
+      pInstance = new Timestamp();
+    }
+  }
+
+  return *pInstance;
 }
 
 Timestamp::Timestamp (
